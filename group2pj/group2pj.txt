@@ -6,6 +6,7 @@ pipeline {
                 script {
                     try {
                         git 'https://github.com/mankinimbom/maven.git'
+                        echo 'downloading from github'
                         } catch (Exception e1) {
                             emailext body: 'jenkens failed to download the code from the git repository', subject: 'git download failed', to: 'kongnyunoel@gmail.com'
                             error ("gitclone failed")
