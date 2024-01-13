@@ -1,0 +1,91 @@
+pipeline {
+    agent any 
+    stages {
+        stage ('gitcheckout') {
+            steps {
+                script {
+                    try {
+                        git 'https://github.com/mankinimbom/maven.git'
+                        } catch (Exception e1) {
+                            emailext body: 'jenkens failed to download the code from the git repository', subject: 'git download failed', to: 'kongnyunoel@gmail.com'
+                            error ("gitclone failed")
+
+                    }
+                }
+                
+            }
+
+        }
+        stage ('continous-build') {
+            steps {
+                script {
+                    try {
+                        sh 'mvn package'
+                    } catch (Exception e2) {
+                        emailext body: 'maven failed to build the project', subject: 'maven failed', to: 'noelshikikongnyu@gmail.com'
+                        error("maven failed")
+
+                    }
+
+                    }
+                }
+            }
+            stage ('continous-testing') {
+            steps {
+                script {
+                    try {
+                        git 'https://github.com/mankinimbom/testingproject.git'
+                        sh 'java -jar /var/jenkins_home/workspace/grtwoworkd5/testing.jar'
+                    } catch (Exception e3) {
+                        emailext body: 'test failed to execute', subject: 'test failed ', to: 'finighangmuh94@gmail.com'
+                        error ("test failed")
+                    }
+                }
+            }
+        }
+        stage ('continous-deployment') {
+            steps {
+                script {
+                    try {
+                        deploy adapters: [tomcat9(credentialsId: 'tomcatweb', path: '', url: 'https://tomcat.atparadigmlabs.com/')], contextPath: 'grwork', war: '**/*.war'
+                    } catch (Exception e4) {
+                        emailext body: 'deploy failed to execute', subject: 'deployment failed ', to: 'finighangmuh94@gmail.com'
+                        error ("deployment failed")
+
+                    }
+                }
+            }
+        }
+        stage ('sonarqube analysis') {
+            steps {
+                script {
+                    try {
+                        withSonarQubeEnv(credentialsId: 'grouptwo') {
+                        }
+                    }  catch (Exception e5) {
+                        emailext body: 'Sonar analysis failed', subject: 'sonar failed ', to: 'ngwanishey@gmail.com'
+                        error ( "sonar scan unsuccessful")
+
+                }
+            }
+        }
+        }
+        stage('Nexus artifact'){
+            steps{
+                script {
+                    try {
+                        nexusArtifactUploader artifacts: [[artifactId: 'webapp', classifier: '', file: '/var/jenkins_home/workspace/grtwoworkd5/webapp/target/webapp.war', type: 'war']], credentialsId: 'nexus', groupId: 'webapp', nexusUrl: 'nexus.atparadigmlabs.com', nexusVersion: 'nexus3', protocol: 'https', repository: 'grtwo', version: '1.0-Release'
+                    } catch (Exception e6) {
+                        emailext body: 'nexus artifact failed', subject: 'nexus failed ', to: 'ngwanishey@gmail.com'
+                        error ("Nexus failed tp deploy the artifact")
+
+
+
+
+                    }
+                }
+            }
+        }
+    }
+}
+  
